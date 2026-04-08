@@ -14,15 +14,13 @@ export function AdminHolidayManager() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [holidays, setHolidays] = useState<CalendarHoliday[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [dateKey, setDateKey] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string }>();
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setMessage(undefined);
 
     fetchCalendarHolidays({ year, month })
       .then((items) => {
@@ -73,12 +71,20 @@ export function AdminHolidayManager() {
           <input
             type="number"
             value={year}
-            onChange={(event) => setYear(Number(event.target.value) || today.getFullYear())}
+            onChange={(event) => {
+              setLoading(true);
+              setMessage(undefined);
+              setYear(Number(event.target.value) || today.getFullYear());
+            }}
             className="h-10 w-24 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-ink outline-none"
           />
           <select
             value={month}
-            onChange={(event) => setMonth(Number(event.target.value))}
+            onChange={(event) => {
+              setLoading(true);
+              setMessage(undefined);
+              setMonth(Number(event.target.value));
+            }}
             className="h-10 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-ink outline-none"
           >
             {Array.from({ length: 12 }, (_, index) => index + 1).map((value) => (

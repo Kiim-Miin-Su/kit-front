@@ -38,7 +38,7 @@ export function AdminInstructorCourseManager() {
       .catch(() => {
         if (!cancelled) {
           setMessage({
-            type: "error", // ts로 저장?
+            type: "error",
             text: "강사-과정 매핑 정보를 불러오지 못했습니다.",
           });
         }
