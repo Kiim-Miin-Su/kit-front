@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
+import Image from "next/image";
 
 import type { SubmissionAttachment } from "@/types/submission";
 
@@ -13,9 +14,7 @@ export function SelectedFilesPreview({
   title?: string;
   onRemoveFile?: (index: number) => void;
 }) {
-  const [objectUrls, setObjectUrls] = useState<Record<number, string>>({});
-
-  useEffect(() => {
+  const objectUrls = useMemo(() => {
     const nextUrls: Record<number, string> = {};
 
     files.forEach((file, index) => {
@@ -23,12 +22,14 @@ export function SelectedFilesPreview({
         nextUrls[index] = URL.createObjectURL(file);
       }
     });
-    setObjectUrls(nextUrls);
-
-    return () => {
-      Object.values(nextUrls).forEach((url) => URL.revokeObjectURL(url));
-    };
+    return nextUrls;
   }, [files]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(objectUrls).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [objectUrls]);
 
   if (files.length === 0) {
     return null;
@@ -59,10 +60,13 @@ export function SelectedFilesPreview({
             </div>
             {objectUrls[index] ? (
               file.type.startsWith("image/") ? (
-                <img
+                <Image
                   src={objectUrls[index]}
                   alt={file.name}
-                  className="mt-2 max-h-36 rounded-md border border-slate-200 object-contain"
+                  width={560}
+                  height={240}
+                  unoptimized
+                  className="mt-2 max-h-36 w-auto rounded-md border border-slate-200 object-contain"
                 />
               ) : (
                 <video

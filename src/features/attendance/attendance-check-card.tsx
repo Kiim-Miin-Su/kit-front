@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { AttendanceCheckInButton } from "@/features/attendance/attendance-check-in-button";
 import {
@@ -26,12 +26,6 @@ export function AttendanceCheckCard({
 }) {
   const [code, setCode] = useState("");
   const actionDisabled = !attendance.canCheckInNow;
-
-  useEffect(() => {
-    if (feedback?.type === "success") {
-      setCode("");
-    }
-  }, [feedback?.type]);
 
   return (
     <article className="rounded-[28px] border border-emerald-200 bg-gradient-to-br from-[#f0fbe8] via-[#eff9de] to-[#f7fde9] p-5 shadow-sm">

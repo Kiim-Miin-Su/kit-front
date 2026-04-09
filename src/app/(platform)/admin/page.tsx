@@ -1,6 +1,6 @@
 import { PageIntro } from "@/components/layout/page-intro";
-import { AdminHolidayManager } from "@/features/admin/admin-holiday-manager";
-import { AdminInstructorCourseManager } from "@/features/admin/admin-instructor-course-manager";
+import { AdminAcademyWorkspaceManager } from "@/features/admin/admin-academy-workspace-manager";
+import { AdminScheduleManager } from "@/features/admin/admin-schedule-manager";
 
 export default function AdminDashboardPage() {
   return (
@@ -8,10 +8,10 @@ export default function AdminDashboardPage() {
       <PageIntro
         eyebrow="Admin"
         title="관리자 운영 페이지"
-        description="강사 담당 과정과 공휴일 데이터를 함께 관리합니다."
+        description="학원 수업/권한과 전체 일정을 운영합니다."
       />
-      <AdminInstructorCourseManager />
-      <AdminHolidayManager />
+      <AdminAcademyWorkspaceManager />
+      <AdminScheduleManager />
     </div>
   );
 }

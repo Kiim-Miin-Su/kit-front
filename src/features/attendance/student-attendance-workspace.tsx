@@ -93,6 +93,15 @@ export function StudentAttendanceWorkspace({
   useEffect(() => {
     if (!selectedCalendarDateKey) {
       setSelectedCalendarDateKey(visibleSchedules[0]?.dateKey);
+      return;
+    }
+
+    const hasSelectedDateInVisibleSchedule = visibleSchedules.some(
+      (schedule) => schedule.dateKey === selectedCalendarDateKey,
+    );
+
+    if (!hasSelectedDateInVisibleSchedule) {
+      setSelectedCalendarDateKey(visibleSchedules[0]?.dateKey);
     }
   }, [selectedCalendarDateKey, visibleSchedules]);
 

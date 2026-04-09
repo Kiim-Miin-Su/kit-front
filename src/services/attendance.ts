@@ -4,7 +4,13 @@ import {
   studentAttendanceProfile,
   submitAttendanceCodeCheckIn,
 } from "@/features/attendance/mock-attendance-data";
+import {
+  buildEffectiveAllowedScheduleScopes,
+  isScheduleVisibleForScopes,
+} from "@/features/attendance/attendance-schedule-visibility";
 import { api } from "@/services/api";
+import { readAttendanceScopePolicyByClassScope } from "@/services/attendance-scope-policy-storage";
+import { readStoredCustomAcademySchedules } from "@/services/attendance-schedule-storage";
 import type {
   AttendanceCheckInError,
   AttendanceCheckInResult,
@@ -22,12 +28,12 @@ export async function fetchStudentAttendanceWorkspace(): Promise<StudentAttendan
     const normalized = normalizeAttendanceWorkspaceResponse(data);
 
     if (normalized) {
-      return normalized;
+      return mergeCustomSchedulesToAttendanceProfile(normalized);
     }
 
     throw new Error("INVALID_ATTENDANCE_WORKSPACE_RESPONSE");
   } catch {
-    return studentAttendanceProfile;
+    return mergeCustomSchedulesToAttendanceProfile(studentAttendanceProfile);
   }
 }
 
@@ -161,13 +167,24 @@ function normalizeAttendanceWorkspaceResponse(data: unknown): StudentAttendanceP
   const schedules = rawSchedules
     .map((item) => normalizeStudentSchedule(item))
     .filter((schedule): schedule is StudentScheduleEvent => Boolean(schedule));
-  const allowedScheduleScopes = Array.isArray(raw.allowedScheduleScopes)
+  const rawAllowedScheduleScopes = Array.isArray(raw.allowedScheduleScopes)
     ? raw.allowedScheduleScopes.filter((scope): scope is string => typeof scope === "string")
     : Array.from(new Set(schedules.map((schedule) => schedule.visibilityScope)));
+  const classScope =
+    typeof raw.classScope === "string" ? raw.classScope : studentAttendanceProfile.classScope;
+  const allowedScheduleScopes = buildEffectiveAllowedScheduleScopes({
+    allowedScheduleScopes: rawAllowedScheduleScopes,
+    classScope,
+  });
   const allowedScheduleLabels = Array.from(
     new Set(
       schedules
-        .filter((schedule) => allowedScheduleScopes.includes(schedule.visibilityScope))
+        .filter((schedule) =>
+          isScheduleVisibleForScopes({
+            schedule,
+            allowedScheduleScopes,
+          }),
+        )
         .map((schedule) =>
           schedule.visibilityType === "global" ? "학원 전체 행사" : schedule.visibilityLabel,
         ),
@@ -178,12 +195,8 @@ function normalizeAttendanceWorkspaceResponse(data: unknown): StudentAttendanceP
     programName:
       typeof raw.programName === "string" ? raw.programName : studentAttendanceProfile.programName,
     className: typeof raw.className === "string" ? raw.className : studentAttendanceProfile.className,
-    classScope:
-      typeof raw.classScope === "string" ? raw.classScope : studentAttendanceProfile.classScope,
-    allowedScheduleScopes:
-      allowedScheduleScopes.length > 0
-        ? allowedScheduleScopes
-        : studentAttendanceProfile.allowedScheduleScopes,
+    classScope,
+    allowedScheduleScopes,
     allowedScheduleLabels:
       allowedScheduleLabels.length > 0
         ? allowedScheduleLabels
@@ -412,6 +425,67 @@ function mergeHolidays(primary: CalendarHoliday[], custom: CalendarHoliday[]) {
   }
 
   return Array.from(mergedByDate.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+}
+
+function mergeCustomSchedulesToAttendanceProfile(
+  profile: StudentAttendanceProfile,
+): StudentAttendanceProfile {
+  const persistedPolicy = readAttendanceScopePolicyByClassScope(profile.classScope);
+  const customSchedules = readStoredCustomAcademySchedules();
+
+  const effectiveAllowedScopes = buildEffectiveAllowedScheduleScopes({
+    allowedScheduleScopes: persistedPolicy?.allowedScheduleScopes ?? profile.allowedScheduleScopes,
+    classScope: profile.classScope,
+  });
+
+  const mergedById = new Map<string, StudentScheduleEvent>();
+
+  for (const schedule of profile.schedules) {
+    mergedById.set(schedule.id, schedule);
+  }
+
+  for (const schedule of customSchedules) {
+    if (
+      !isScheduleVisibleForScopes({
+        schedule,
+        allowedScheduleScopes: effectiveAllowedScopes,
+      })
+    ) {
+      continue;
+    }
+
+    mergedById.set(schedule.id, schedule);
+  }
+
+  const schedules = Array.from(mergedById.values()).sort((a, b) => {
+    if (a.dateKey === b.dateKey) {
+      return a.timeLabel.localeCompare(b.timeLabel, "ko");
+    }
+
+    return a.dateKey.localeCompare(b.dateKey, "ko");
+  });
+  const allowedScheduleLabels = Array.from(
+    new Set(
+      schedules
+        .filter((schedule) =>
+          isScheduleVisibleForScopes({
+            schedule,
+            allowedScheduleScopes: effectiveAllowedScopes,
+          }),
+        )
+        .map((schedule) =>
+          schedule.visibilityType === "global" ? "학원 전체 행사" : schedule.visibilityLabel,
+        ),
+    ),
+  );
+
+  return {
+    ...profile,
+    allowedScheduleScopes: effectiveAllowedScopes,
+    schedules,
+    allowedScheduleLabels:
+      allowedScheduleLabels.length > 0 ? allowedScheduleLabels : profile.allowedScheduleLabels,
+  };
 }
 
 function isSameYearMonth(dateKey: string, year: number, month: number) {

@@ -1,4 +1,8 @@
 import { resolveScheduleCheckInAvailability } from "@/features/attendance/attendance-check-in-availability";
+import {
+  buildEffectiveAllowedScheduleScopes,
+  isScheduleVisibleForScopes,
+} from "@/features/attendance/attendance-schedule-visibility";
 import type {
   AttendanceCheckInError,
   AttendanceCheckInResult,
@@ -121,8 +125,15 @@ export function getVisibleSchedules(
   profile: StudentAttendanceProfile,
   runtimeState: AttendanceRuntimeState = {},
 ): StudentScheduleEvent[] {
+  const allowedScheduleScopes = buildEffectiveAllowedScheduleScopes({
+    allowedScheduleScopes: profile.allowedScheduleScopes,
+    classScope: profile.classScope,
+  });
   const visibleSchedules = profile.schedules.filter((schedule) =>
-    profile.allowedScheduleScopes.includes(schedule.visibilityScope),
+    isScheduleVisibleForScopes({
+      schedule,
+      allowedScheduleScopes,
+    }),
   );
 
   return visibleSchedules.map((schedule) => {

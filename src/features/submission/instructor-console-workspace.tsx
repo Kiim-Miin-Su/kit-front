@@ -261,7 +261,7 @@ export function InstructorConsoleWorkspace() {
 
     setTemplateTitle(selectedAssignmentTemplate.title);
     setTemplateContent(selectedAssignmentTemplate.content);
-  }, [selectedAssignmentTemplate?.id, templateTargetMode]);
+  }, [selectedAssignmentTemplate, templateTargetMode]);
 
   useEffect(() => {
     if (!workspace || !selectedSubmission) {

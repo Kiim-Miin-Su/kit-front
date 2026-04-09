@@ -44,7 +44,7 @@ export function MarketingHome({ catalog }: MarketingHomeProps) {
     무료: false,
     로드맵: false,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchResult, setSearchResult] = useState<CourseSearchResult>(() => {
     const seededCourses = buildExpandedCourses(catalog);
     const totalPages = Math.max(1, Math.ceil(seededCourses.length / pageSize));
@@ -59,12 +59,7 @@ export function MarketingHome({ catalog }: MarketingHomeProps) {
   });
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, selectedDuration, selectedPrice, activeTopToggles, searchQuery]);
-
-  useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
     const query = buildCourseSearchQuery({
       page: currentPage,
       size: pageSize,
@@ -167,23 +162,44 @@ export function MarketingHome({ catalog }: MarketingHomeProps) {
         <section className="space-y-4">
           <HomeSearch
             searchQuery={searchQuery}
-            onSearchQueryChange={setSearchQuery}
-            onSearchApply={() => setCurrentPage(1)}
+            onSearchQueryChange={(value) => {
+              setIsLoading(true);
+              setCurrentPage(1);
+              setSearchQuery(value);
+            }}
+            onSearchApply={() => {
+              setIsLoading(true);
+              setCurrentPage(1);
+            }}
           />
           <HomeFilterBar
             selectedCategory={selectedCategory}
             selectedDuration={selectedDuration}
             selectedPrice={selectedPrice}
             activeTopToggles={activeTopToggles}
-            onSelectedCategoryChange={setSelectedCategory}
-            onSelectedDurationChange={setSelectedDuration}
-            onSelectedPriceChange={setSelectedPrice}
-            onToggleChange={(key) =>
+            onSelectedCategoryChange={(value) => {
+              setIsLoading(true);
+              setCurrentPage(1);
+              setSelectedCategory(value);
+            }}
+            onSelectedDurationChange={(value) => {
+              setIsLoading(true);
+              setCurrentPage(1);
+              setSelectedDuration(value);
+            }}
+            onSelectedPriceChange={(value) => {
+              setIsLoading(true);
+              setCurrentPage(1);
+              setSelectedPrice(value);
+            }}
+            onToggleChange={(key) => {
+              setIsLoading(true);
+              setCurrentPage(1);
               setActiveTopToggles((prev) => ({
                 ...prev,
                 [key]: !prev[key],
-              }))
-            }
+              }));
+            }}
           />
           <div className="space-y-4 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
             {isLoading ? (
@@ -196,7 +212,10 @@ export function MarketingHome({ catalog }: MarketingHomeProps) {
               currentPage={searchResult.page}
               totalPages={searchResult.totalPages}
               totalElements={searchResult.totalElements}
-              onPageChange={setCurrentPage}
+              onPageChange={(page) => {
+                setIsLoading(true);
+                setCurrentPage(page);
+              }}
             />
           </div>
         </section>
