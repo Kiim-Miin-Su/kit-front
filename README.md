@@ -32,9 +32,12 @@ npm install
 npm run dev
 ```
 
+- 기본 API 주소는 `http://localhost:4000`
+- 다른 백엔드를 쓰면 `NEXT_PUBLIC_API_BASE_URL`로 덮어쓴다.
+
 3. 테스트
 ```bash
-npm test -- --runInBand
+npm test
 ```
 
 4. 빌드
@@ -54,9 +57,18 @@ npm run build
 - `/admin/courses/[courseId]` 관리자 수업 상세
 - `/admin/courses/[courseId]/audit` 관리자 수업 감사 로그
 
+## 현재 확인된 공백
+- 강의/출석/관리자 서비스는 API 실패 시 fallback mock/localStorage로 계속 동작한다.
+- 파일 업로드 UI와 학습 플레이어는 아직 실사용 단계가 아니다.
+
+## 로컬 로그인
+- `student-demo-01@koreait.academy / password123`
+- `instructor-dev-01@koreait.academy / password123`
+- `admin-root@koreait.academy / password123`
+
 ## 문서
 - 프론트 구조/정책: `progress/INFO.md`
-- 프론트 진행 로그: `progress/progress_08.md`
+- 프론트 최신 계획: `progress/progress_09.md`
 - 백엔드 인수인계 아키텍처: `progress/architecture.md`
 - 백엔드 상세 계약: `../back/progress/FRONT_HANDOFF_2026-04-09.md`
 - 백엔드 기준 문서: `../back/INFO.md`

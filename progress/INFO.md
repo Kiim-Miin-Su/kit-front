@@ -1,4 +1,4 @@
-# Frontend Architecture Info (2026-04-09)
+# Frontend Architecture Info (2026-04-12)
 
 ## 문서 범위
 - 프론트 기술/구조 기준 문서.
@@ -43,6 +43,20 @@
 - `submission.ts`
 - `admin.ts`
 - `attendance.ts`
+
+## 현재 확인된 공백
+1. 인증/접근 제어
+- `/sign-in`은 로컬 auth API와 연결된 실제 폼으로 동작한다.
+- `components/auth/role-gate.tsx`는 있지만 `middleware.ts` 기반 보호는 아직 없다.
+
+2. 실연동 범위
+- `course.ts`, `attendance.ts`, `admin.ts`, `submission.ts`는 API 실패 시 fallback으로 동작한다.
+- 백엔드 `auth/users/courses/enrollments/attendance`가 비어 있어서 실연동 범위가 제한된다.
+
+3. UX 미완성
+- 제출 파일 업로드 위젯 부재
+- `features/learn/player-stage.tsx`는 `Mock Lesson` 단계
+- 공통 에러/로딩 패턴 미정리
 
 ## 관리자 운영 정책
 1. 수업 운영
@@ -95,7 +109,7 @@
 - `GET /courses/{courseId}/assignment-audit`
 
 ## 참고 문서
-- 프론트 진행 로그: `progress/progress_08.md`
+- 프론트 최신 계획: `progress/progress_09.md`
 - 백엔드 인수인계 아키텍처: `progress/architecture.md`
 - 백엔드 상세 계약: `../back/progress/FRONT_HANDOFF_2026-04-09.md`
 - 백엔드 기준 문서: `../back/INFO.md`
