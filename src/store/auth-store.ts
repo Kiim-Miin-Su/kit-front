@@ -36,7 +36,9 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: AUTH_STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      partialize: ({ accessToken, user }) => ({ accessToken, user }),
+      // accessToken은 XSS 노출 방지를 위해 localStorage에 저장하지 않는다.
+      // 탭 새로고침 후 token이 없으면 /auth/refresh(httpOnly Cookie)로 재발급한다.
+      partialize: ({ user }) => ({ user }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);
       },
