@@ -72,3 +72,4 @@ npm run build
 - 백엔드 인수인계 아키텍처: `progress/architecture.md`
 - 백엔드 상세 계약: `../back/progress/FRONT_HANDOFF_2026-04-09.md`
 - 백엔드 기준 문서: `../back/INFO.md`
+- Azure 배포 문서: `AZURE_DEPLOY.md`

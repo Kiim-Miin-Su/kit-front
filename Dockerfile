@@ -20,6 +20,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/.next ./.next
+COPY --from=build /app/next.config.mjs ./next.config.mjs
 COPY --from=build /app/public ./public
 
 EXPOSE 3000
