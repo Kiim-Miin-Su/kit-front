@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import { useAuthStore } from "@/store/auth-store";
 
@@ -22,6 +23,14 @@ const ROLE_HOME: Record<string, string> = {
 };
 
 export default function UnauthorizedPage() {
+  return (
+    <Suspense fallback={<UnauthorizedPageFallback />}>
+      <UnauthorizedPageContent />
+    </Suspense>
+  );
+}
+
+function UnauthorizedPageContent() {
   const searchParams = useSearchParams();
   const required = searchParams.get("required") ?? "";
   const from = searchParams.get("from") ?? "";
@@ -95,6 +104,18 @@ export default function UnauthorizedPage() {
             다른 계정으로 로그인
           </Link>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function UnauthorizedPageFallback() {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+      <div className="rounded-[32px] border border-rose-200 bg-rose-50 p-10 shadow-sm">
+        <h1 className="text-2xl font-semibold tracking-tight text-rose-800">
+          접근 권한이 없습니다
+        </h1>
       </div>
     </div>
   );

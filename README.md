@@ -207,6 +207,7 @@ npm test               # 단위 테스트
 
 ```
 front/
+├── public/                      # 정적 에셋
 ├── src/
 │   ├── app/                        # Next.js App Router
 │   │   ├── (auth)/sign-in/         # 로그인 페이지
@@ -218,14 +219,26 @@ front/
 │   │       ├── instructor/         # 강사 콘솔
 │   │       ├── submissions/        # 제출 상세
 │   │       └── admin/              # 관리자 운영
-│   ├── features/                   # 페이지별 UI 컴포넌트
+│   ├── features/                   # 도메인별 화면 조합 로직
+│   │   ├── admin/                  # 관리자 대시보드/운영 화면
+│   │   ├── attendance/             # 출석 이벤트, 체크인 상태, 상세 패널
+│   │   ├── course/                 # 강좌 카드, 상세 표시
+│   │   ├── home/                   # 공개 홈 섹션
+│   │   ├── learn/                  # 학습 허브 위젯
+│   │   └── submission/             # 제출 상세, 피드백, 첨부파일 UI
 │   ├── components/                 # 공통 UI 컴포넌트
+│   │   ├── auth/                   # 보호 라우트, 세션 관련 UI
+│   │   ├── layout/                 # 페이지 레이아웃 프레임
+│   │   ├── navigation/             # 헤더/사이드바/탭 이동
+│   │   └── providers/              # 전역 provider 래퍼
 │   ├── services/                   # API 호출 레이어 (axios + fallback)
+│   ├── lib/                        # 브라우저 저장소/유틸
 │   ├── store/auth-store.ts         # Zustand 인증 상태
-│   ├── lib/auth-storage.ts         # localStorage + 역할 쿠키 관리
+│   ├── config/                     # 네비게이션, 런타임 기본값
 │   ├── types/                      # TypeScript 타입 정의
-│   ├── config/                     # 네비게이션 설정
 │   └── middleware.ts               # 역할 기반 라우팅 보호
+├── scripts/                        # 개발 환경 보조 스크립트
+├── progress/                       # 작업 기록/진행 메모
 ├── tests/                          # 단위 테스트
 ├── setup.sh                        # 최초 설정 스크립트
 ├── Makefile                        # 자주 쓰는 명령어 단축키
@@ -233,6 +246,23 @@ front/
 ├── docker-compose.yml              # 개발 환경 (핫 리로드)
 └── .env.example                    # 환경 변수 템플릿
 ```
+
+### 폴더별 역할 요약
+
+| 경로 | 역할 |
+|------|------|
+| `src/app` | 라우트 엔트리와 페이지 조합 |
+| `src/features` | 도메인 단위 화면 기능 묶음 |
+| `src/components` | 여러 페이지에서 재사용하는 UI |
+| `src/services` | 백엔드 API 요청과 fallback 처리 |
+| `src/store` | 전역 상태 관리 |
+| `src/lib` | 브라우저 저장소/유틸리티 |
+| `src/config` | 라우트/메뉴/런타임 기본 설정 |
+| `src/types` | API 응답 및 화면 모델 타입 |
+| `public` | 이미지, 아이콘 등 정적 파일 |
+| `scripts` | 개발/초기화 스크립트 |
+| `progress` | 구현 진행 메모와 변경 기록 |
+| `tests` | 프론트 단위 테스트 |
 
 ---
 

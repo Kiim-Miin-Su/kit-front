@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { resolveScheduleCheckInAvailability } from "@/features/attendance/attendance-check-in-availability";
 import { getScheduleTone } from "@/features/attendance/attendance-schedule-tone";
@@ -15,10 +15,7 @@ export function AttendanceEventDetail({
   events: StudentScheduleEvent[];
   onOpenAttendance: (eventId: string) => void;
 }) {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date());
-  }, []);
+  const now = useHydratedNow();
   if (!dateKey) {
     return (
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -112,4 +109,21 @@ function formatDateKey(dateKey: string) {
     day: "numeric",
     weekday: "long",
   }).format(date);
+}
+
+function useHydratedNow() {
+  const isHydrated = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
+  return isHydrated ? new Date() : null;
+}
+
+function subscribeToHydration() {
+  return () => {};
+}
+
+function getClientHydrationSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
 }

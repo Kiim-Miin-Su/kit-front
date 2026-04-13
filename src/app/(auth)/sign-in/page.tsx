@@ -3,7 +3,7 @@
 import axios from "axios";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 
 import { signIn } from "@/services/auth";
 import { useAuthStore } from "@/store/auth-store";
@@ -15,6 +15,14 @@ const demoAccounts = [
 ];
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInPageFallback />}>
+      <SignInPageContent />
+    </Suspense>
+  );
+}
+
+function SignInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hydrated = useAuthStore((state) => state.hydrated);
@@ -137,6 +145,29 @@ export default function SignInPage() {
               강의 목록으로 이동
             </Link>
           </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function SignInPageFallback() {
+  return (
+    <main className="mx-auto flex min-h-screen max-w-7xl items-center px-6 py-10">
+      <section className="grid w-full gap-8 rounded-[36px] border border-slate-200 bg-white/90 p-8 shadow-sm lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[28px] bg-[#10302b] p-8 text-white">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-200">
+            Sign In
+          </p>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight">
+            로컬 인증 흐름 시작
+          </h1>
+        </div>
+        <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-8">
+          <p className="text-sm font-semibold text-slate-500">Local Auth</p>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-ink">
+            계정 로그인
+          </h2>
         </div>
       </section>
     </main>
