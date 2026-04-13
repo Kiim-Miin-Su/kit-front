@@ -50,6 +50,11 @@ PY
     return $?
   fi
 
+  if command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "\$response = Invoke-WebRequest -UseBasicParsing -Uri '${1}/healthz' -TimeoutSec 5 -ErrorAction SilentlyContinue; if (\$response -and \$response.StatusCode -eq 200) { exit 0 } else { exit 1 }" >/dev/null 2>&1
+    return $?
+  fi
+
   return 1
 }
 
@@ -111,6 +116,11 @@ result = sock.connect_ex(("127.0.0.1", port))
 sock.close()
 raise SystemExit(0 if result == 0 else 1)
 PY
+    return $?
+  fi
+
+  if command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "\$connections = Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue; if (\$connections) { exit 0 } else { exit 1 }" >/dev/null 2>&1
     return $?
   fi
 

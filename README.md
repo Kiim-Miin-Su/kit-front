@@ -8,6 +8,16 @@ Next.js 15 App Router 기반 AI 교육 LMS 프론트엔드입니다.
 
 **사전 요구사항:** 가능한 경우 `./setup.sh`가 Docker 설치/실행을 우선 시도합니다.
 
+### 먼저 알아둘 점
+
+완전히 아무것도 없는 새 PC에서 `git clone` 직후 100% 무설치 자동 실행까지는 아닙니다. 아래 항목은 사용자가 직접 준비하거나 최초 1회 승인해야 할 수 있습니다.
+
+1. `Git` 또는 `Git Bash`
+2. 인터넷 연결
+3. Docker Desktop 최초 실행/권한 승인
+4. 회사 보안 정책 때문에 `brew`, `winget` 자동 설치가 막힌 경우의 수동 설치
+5. 실 API 연동을 원하면 sibling `back` 저장소
+
 ### 최소 설치물
 
 macOS:
@@ -23,6 +33,21 @@ Windows:
 3. `winget`은 자동 설치를 쓰고 싶을 때만 필요
 
 `front/setup.sh`는 Docker가 없거나 꺼져 있으면 자동 설치/실행을 시도합니다. 기본 실행은 실 API 연동 기준이며, mock 모드는 `--allow-mock`을 명시했을 때만 허용합니다.
+
+### 자동 설치가 안 되는 경우 직접 설치해야 하는 것
+
+macOS:
+
+1. `Git`이 없어서 저장소 clone 자체를 못 하는 경우
+2. `Homebrew`가 없고, 앱 설치를 CLI로 하고 싶지 않은 경우
+3. Docker Desktop 첫 실행에서 macOS 보안 승인/로그인이 필요한 경우
+
+Windows:
+
+1. `Git Bash`가 없어서 `./setup.sh`를 실행할 셸이 없는 경우
+2. `winget` 사용이 차단된 회사 PC
+3. Docker Desktop 첫 실행에서 관리자 권한 또는 WSL 연동 승인이 필요한 경우
+4. 실 API 연동을 위한 sibling `back` 저장소가 없는 경우
 
 ### 수동 설치 명령
 
