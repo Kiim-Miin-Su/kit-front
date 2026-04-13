@@ -71,10 +71,12 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(signInUrl);
     }
 
-    // 권한 없는 역할 → 역할 홈으로
+    // 권한 없는 역할 → 접근 불가 안내 페이지로
     if (!matchedRoute.allowed.includes(role)) {
-      const home = ROLE_HOME[role];
-      return NextResponse.redirect(new URL(home, request.url));
+      const deniedUrl = new URL("/unauthorized", request.url);
+      deniedUrl.searchParams.set("required", matchedRoute.allowed.join(","));
+      deniedUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(deniedUrl);
     }
   }
 
