@@ -1,13 +1,11 @@
-.PHONY: setup env run dev dev-d logs stop clean test shell build
+.PHONY: setup dev dev-d logs stop clean test shell build help
 
-setup:        ## 사전 요구사항 점검 + .env 생성
-	bash ./scripts/setup-dev.sh
+# ── 최초 설정 ──────────────────────────────────────────
+setup:         ## [첫 실행] Docker 확인 + .env 생성 + 서버 시작
+	bash setup.sh
 
-env:          ## .env 생성
-	node ./scripts/init-env.mjs
-
-run:          ## clone 직후 실행용: setup 후 docker compose up
-	bash ./scripts/run-dev.sh
+setup-install: ## [첫 실행] Docker 자동 설치 포함 (macOS/Linux)
+	bash setup.sh --install
 
 # ── 개발 환경 ──────────────────────────────────────────
 dev:          ## 개발 서버 실행 (foreground, 핫 리로드)
@@ -31,7 +29,7 @@ test:         ## 단위 테스트 실행
 
 # ── 빌드 ────────────────────────────────────────────────
 build:        ## 프로덕션 이미지 빌드
-	docker compose -f docker-compose.prod.yml build
+	docker build -t ai-edu-front .
 
 # ── 유틸 ────────────────────────────────────────────────
 shell:        ## front 컨테이너 쉘 진입
@@ -39,4 +37,4 @@ shell:        ## front 컨테이너 쉘 진입
 
 help:         ## 사용 가능한 명령어 목록
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	  awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+	  awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'

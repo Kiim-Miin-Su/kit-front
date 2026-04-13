@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { AUTH_STORAGE_KEY } from "@/lib/auth-storage";
+import { AUTH_STORAGE_KEY, clearRoleCookie, setRoleCookie } from "@/lib/auth-storage";
 import type { AuthSession, AuthUser, UserRole } from "@/types/auth";
 
 interface AuthStore extends AuthSession {
@@ -27,9 +27,15 @@ export const useAuthStore = create<AuthStore>()(
       ...initialState,
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
-      setSession: ({ accessToken, user }) => set({ accessToken, user }),
+      setSession: ({ accessToken, user }) => {
+        set({ accessToken, user });
+        if (user?.role) setRoleCookie(user.role);
+      },
       setUser: (user) => set({ user }),
-      clearSession: () => set(initialState),
+      clearSession: () => {
+        set(initialState);
+        clearRoleCookie();
+      },
       isAuthenticated: () => Boolean(get().accessToken && get().user),
       getRole: () => get().user?.role ?? "guest",
     }),
