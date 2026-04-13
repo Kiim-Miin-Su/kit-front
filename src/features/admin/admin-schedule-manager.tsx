@@ -71,6 +71,18 @@ const defaultScheduleForm: AdminScheduleFormState = {
 
 const ADMIN_SCHEDULE_TEMPLATE_STORAGE_KEY = "ai-edu-admin-schedule-templates-v1";
 
+const CALENDAR_DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
+
+function toMonthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function shiftMonth(monthKey: string, delta: number) {
+  const [y, m] = monthKey.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return toMonthKey(d);
+}
+
 export function AdminScheduleManager() {
   const [workspace, setWorkspace] = useState<AdminScheduleWorkspaceData>();
   const [loading, setLoading] = useState(true);
@@ -84,6 +96,9 @@ export function AdminScheduleManager() {
   const [repeatCount, setRepeatCount] = useState("4");
   const [templateName, setTemplateName] = useState("");
   const [templates, setTemplates] = useState<AdminScheduleTemplate[]>([]);
+  const [scheduleView, setScheduleView] = useState<"list" | "calendar">("list");
+  const [calendarMonthKey, setCalendarMonthKey] = useState("");
+  const [selectedCalendarDateKey, setSelectedCalendarDateKey] = useState<string>();
 
   const loadWorkspace = useCallback(async (withLoading = false) => {
     if (withLoading) {
@@ -109,6 +124,10 @@ export function AdminScheduleManager() {
 
   useEffect(() => {
     setTemplates(readAdminScheduleTemplatesFromStorage());
+  }, []);
+
+  useEffect(() => {
+    setCalendarMonthKey(toMonthKey(new Date()));
   }, []);
 
   useEffect(() => {
@@ -155,6 +174,33 @@ export function AdminScheduleManager() {
         .includes(normalizedKeyword),
     );
   }, [keyword, workspace?.schedules]);
+
+  const calendarDays = useMemo(() => {
+    if (!calendarMonthKey) return [];
+    const [year, month] = calendarMonthKey.split("-").map(Number);
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDate = new Date(year, month, 0).getDate();
+    const leadingEmpty = (firstDay.getDay() + 6) % 7; // 월요일 시작
+    const totalCells = Math.ceil((leadingEmpty + lastDate) / 7) * 7;
+
+    return Array.from({ length: totalCells }, (_, index) => {
+      const dayNumber = index - leadingEmpty + 1;
+      if (dayNumber < 1 || dayNumber > lastDate) {
+        return { dateKey: `empty-${index}`, dayNumber: "", events: [] as AdminScheduleEvent[] };
+      }
+      const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(dayNumber).padStart(2, "0")}`;
+      return {
+        dateKey,
+        dayNumber: String(dayNumber),
+        events: filteredSchedules.filter((s) => s.dateKey === dateKey),
+      };
+    });
+  }, [calendarMonthKey, filteredSchedules]);
+
+  const selectedDayEvents = useMemo(
+    () => calendarDays.find((d) => d.dateKey === selectedCalendarDateKey)?.events ?? [],
+    [calendarDays, selectedCalendarDateKey],
+  );
 
   const handleSubmitSchedule = async () => {
     const scope =
@@ -322,124 +368,252 @@ export function AdminScheduleManager() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-ink">등록 일정 전체</p>
-          <p className="mt-1 text-xs text-slate-500">
-            학원 전체/수업 범위를 포함한 모든 일정을 시간순으로 보여줍니다.
-          </p>
-
-          <div className="mt-3 space-y-2">
-            {filteredSchedules.length === 0 ? (
-              <p className="text-sm text-slate-500">표시할 일정이 없습니다.</p>
-            ) : (
-              filteredSchedules.map((schedule) => (
-                <article
-                  key={schedule.id}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-3"
+          {/* 헤더 + 탭 토글 */}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-ink">등록 일정 전체</p>
+              <p className="mt-1 text-xs text-slate-500">
+                학원 전체/수업 범위를 포함한 모든 일정을 보여줍니다.
+              </p>
+            </div>
+            <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
+              {(["list", "calendar"] as const).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setScheduleView(view)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                    scheduleView === view
+                      ? "bg-ink text-white"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-ink">{schedule.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {schedule.dateKey} · {schedule.timeLabel}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">{schedule.locationLabel}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
-                        {schedule.categoryLabel}
-                      </span>
-                      <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 border border-slate-200">
-                        {schedule.visibilityLabel}
-                      </span>
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                          schedule.sourceType === "CUSTOM"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {schedule.sourceType === "CUSTOM" ? "직접 등록" : "기본 일정"}
-                      </span>
-                      {schedule.requiresAttendanceCheck ? (
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                          필수 출석
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                  {schedule.requiresAttendanceCheck && schedule.attendanceWindowLabel ? (
-                    <p className="mt-2 text-xs font-semibold text-emerald-700">
-                      {schedule.attendanceWindowLabel}
-                    </p>
-                  ) : null}
-                  {schedule.sourceType === "CUSTOM" ? (
-                    <div className="mt-2 flex justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingScheduleId(schedule.id);
-                          setForm({
-                            title: schedule.title,
-                            categoryLabel: schedule.categoryLabel,
-                            dateKey: schedule.dateKey,
-                            timeLabel: schedule.timeLabel,
-                            locationLabel: schedule.locationLabel,
-                            visibilityType: schedule.visibilityType,
-                            visibilityScope: schedule.visibilityScope,
-                            visibilityLabel: schedule.visibilityLabel,
-                            requiresAttendanceCheck: schedule.requiresAttendanceCheck,
-                            attendanceWindowStartAt: schedule.attendanceWindowStartAt ?? "",
-                            attendanceWindowEndAt: schedule.attendanceWindowEndAt ?? "",
-                          });
-                          setMessage(undefined);
-                        }}
-                        className="inline-flex h-8 items-center rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                      >
-                        수정
-                      </button>
-                      <button
-                        type="button"
-                        disabled={deletingScheduleId === schedule.id}
-                        onClick={async () => {
-                          setDeletingScheduleId(schedule.id);
-                          setMessage(undefined);
-
-                          try {
-                            await deleteAdminSchedule(schedule.id);
-                            setWorkspace((prev) => {
-                              if (!prev) {
-                                return prev;
-                              }
-
-                              return {
-                                ...prev,
-                                schedules: prev.schedules.filter((item) => item.id !== schedule.id),
-                              };
-                            });
-                            setMessage({
-                              type: "success",
-                              text: `${schedule.title} 일정을 삭제했습니다.`,
-                            });
-                          } catch {
-                            setMessage({ type: "error", text: "일정 삭제에 실패했습니다." });
-                          } finally {
-                            setDeletingScheduleId(undefined);
-                          }
-                        }}
-                        className={`inline-flex h-8 items-center rounded-full border border-slate-300 px-3 text-xs font-semibold text-slate-600 ${
-                          deletingScheduleId === schedule.id
-                            ? "cursor-not-allowed bg-slate-100"
-                            : "bg-white hover:bg-slate-50"
-                        }`}
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  ) : null}
-                </article>
-              ))
-            )}
+                  {view === "list" ? "목록" : "캘린더"}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* ── 목록 뷰 ── */}
+          {scheduleView === "list" ? (
+            <div className="mt-3 max-h-[600px] overflow-y-auto space-y-2 pr-1">
+              {filteredSchedules.length === 0 ? (
+                <p className="text-sm text-slate-500">표시할 일정이 없습니다.</p>
+              ) : (
+                filteredSchedules.map((schedule) => (
+                  <ScheduleCard
+                    key={schedule.id}
+                    schedule={schedule}
+                    isDeleting={deletingScheduleId === schedule.id}
+                    onEdit={() => {
+                      setEditingScheduleId(schedule.id);
+                      setForm({
+                        title: schedule.title,
+                        categoryLabel: schedule.categoryLabel,
+                        dateKey: schedule.dateKey,
+                        timeLabel: schedule.timeLabel,
+                        locationLabel: schedule.locationLabel,
+                        visibilityType: schedule.visibilityType,
+                        visibilityScope: schedule.visibilityScope,
+                        visibilityLabel: schedule.visibilityLabel,
+                        requiresAttendanceCheck: schedule.requiresAttendanceCheck,
+                        attendanceWindowStartAt: schedule.attendanceWindowStartAt ?? "",
+                        attendanceWindowEndAt: schedule.attendanceWindowEndAt ?? "",
+                      });
+                      setMessage(undefined);
+                    }}
+                    onDelete={async () => {
+                      setDeletingScheduleId(schedule.id);
+                      setMessage(undefined);
+                      try {
+                        await deleteAdminSchedule(schedule.id);
+                        setWorkspace((prev) => {
+                          if (!prev) return prev;
+                          return {
+                            ...prev,
+                            schedules: prev.schedules.filter((item) => item.id !== schedule.id),
+                          };
+                        });
+                        setMessage({ type: "success", text: `${schedule.title} 일정을 삭제했습니다.` });
+                      } catch {
+                        setMessage({ type: "error", text: "일정 삭제에 실패했습니다." });
+                      } finally {
+                        setDeletingScheduleId(undefined);
+                      }
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          ) : (
+            /* ── 캘린더 뷰 ── */
+            <div className="mt-3">
+              {/* 월 네비게이션 */}
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarMonthKey((prev) => shiftMonth(prev, -1));
+                    setSelectedCalendarDateKey(undefined);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                >
+                  ‹
+                </button>
+                <p className="text-sm font-semibold text-ink">
+                  {calendarMonthKey
+                    ? `${calendarMonthKey.split("-")[0]}년 ${Number(calendarMonthKey.split("-")[1])}월`
+                    : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarMonthKey((prev) => shiftMonth(prev, 1));
+                    setSelectedCalendarDateKey(undefined);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                >
+                  ›
+                </button>
+              </div>
+
+              {/* 요일 헤더 */}
+              <div className="mt-2 grid grid-cols-7 gap-px">
+                {CALENDAR_DAY_LABELS.map((label, i) => (
+                  <div
+                    key={label}
+                    className={`py-1 text-center text-[11px] font-semibold ${
+                      i === 5 ? "text-blue-400" : i === 6 ? "text-rose-400" : "text-slate-400"
+                    }`}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              {/* 날짜 그리드 */}
+              <div className="mt-1 grid grid-cols-7 gap-px rounded-xl overflow-hidden border border-slate-200 bg-slate-200">
+                {calendarDays.map((day) => {
+                  const isSelected = day.dateKey === selectedCalendarDateKey;
+                  const hasEvents = day.events.length > 0;
+                  const dayNum = Number(day.dayNumber);
+                  // 0=Sun,1=Mon..6=Sat → 그리드 위치로 역산
+                  const colIndex = calendarDays.indexOf(day) % 7; // 0=Mon…5=Sat,6=Sun
+
+                  return (
+                    <button
+                      key={day.dateKey}
+                      type="button"
+                      disabled={!day.dayNumber}
+                      onClick={() =>
+                        setSelectedCalendarDateKey(
+                          isSelected ? undefined : day.dateKey,
+                        )
+                      }
+                      className={`relative flex min-h-[52px] flex-col items-center gap-0.5 px-1 py-1.5 text-xs transition ${
+                        !day.dayNumber
+                          ? "bg-slate-50 cursor-default"
+                          : isSelected
+                          ? "bg-ink text-white"
+                          : "bg-white hover:bg-slate-50"
+                      }`}
+                    >
+                      {day.dayNumber ? (
+                        <>
+                          <span
+                            className={`text-xs font-semibold ${
+                              isSelected
+                                ? "text-white"
+                                : colIndex === 5
+                                ? "text-blue-500"
+                                : colIndex === 6
+                                ? "text-rose-500"
+                                : "text-ink"
+                            }`}
+                          >
+                            {dayNum}
+                          </span>
+                          {hasEvents ? (
+                            <span
+                              className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${
+                                isSelected
+                                  ? "bg-white/20 text-white"
+                                  : "bg-brand/10 text-brand"
+                              }`}
+                            >
+                              {day.events.length}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 선택한 날짜의 일정 */}
+              {selectedCalendarDateKey ? (
+                <div className="mt-3 space-y-2 border-t border-slate-200 pt-3">
+                  <p className="text-xs font-semibold text-slate-500">
+                    {selectedCalendarDateKey} 일정 ({selectedDayEvents.length}건)
+                  </p>
+                  {selectedDayEvents.length === 0 ? (
+                    <p className="text-sm text-slate-500">해당 날짜에 일정이 없습니다.</p>
+                  ) : (
+                    <div className="max-h-[320px] overflow-y-auto space-y-2 pr-1">
+                      {selectedDayEvents.map((schedule) => (
+                        <ScheduleCard
+                          key={schedule.id}
+                          schedule={schedule}
+                          isDeleting={deletingScheduleId === schedule.id}
+                          onEdit={() => {
+                            setEditingScheduleId(schedule.id);
+                            setForm({
+                              title: schedule.title,
+                              categoryLabel: schedule.categoryLabel,
+                              dateKey: schedule.dateKey,
+                              timeLabel: schedule.timeLabel,
+                              locationLabel: schedule.locationLabel,
+                              visibilityType: schedule.visibilityType,
+                              visibilityScope: schedule.visibilityScope,
+                              visibilityLabel: schedule.visibilityLabel,
+                              requiresAttendanceCheck: schedule.requiresAttendanceCheck,
+                              attendanceWindowStartAt: schedule.attendanceWindowStartAt ?? "",
+                              attendanceWindowEndAt: schedule.attendanceWindowEndAt ?? "",
+                            });
+                            setMessage(undefined);
+                          }}
+                          onDelete={async () => {
+                            setDeletingScheduleId(schedule.id);
+                            setMessage(undefined);
+                            try {
+                              await deleteAdminSchedule(schedule.id);
+                              setWorkspace((prev) => {
+                                if (!prev) return prev;
+                                return {
+                                  ...prev,
+                                  schedules: prev.schedules.filter((item) => item.id !== schedule.id),
+                                };
+                              });
+                              setMessage({ type: "success", text: `${schedule.title} 일정을 삭제했습니다.` });
+                            } catch {
+                              setMessage({ type: "error", text: "일정 삭제에 실패했습니다." });
+                            } finally {
+                              setDeletingScheduleId(undefined);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-3 text-center text-xs text-slate-400">
+                  날짜를 클릭하면 해당 일정을 볼 수 있습니다.
+                </p>
+              )}
+            </div>
+          )}
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -710,6 +884,80 @@ export function AdminScheduleManager() {
         </article>
       </div>
     </section>
+  );
+}
+
+function ScheduleCard({
+  schedule,
+  isDeleting,
+  onEdit,
+  onDelete,
+}: {
+  schedule: AdminScheduleEvent;
+  isDeleting: boolean;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
+}) {
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white px-3 py-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-ink">{schedule.title}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {schedule.dateKey} · {schedule.timeLabel}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">{schedule.locationLabel}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+            {schedule.categoryLabel}
+          </span>
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+            {schedule.visibilityLabel}
+          </span>
+          <span
+            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+              schedule.sourceType === "CUSTOM"
+                ? "bg-amber-100 text-amber-700"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {schedule.sourceType === "CUSTOM" ? "직접 등록" : "기본 일정"}
+          </span>
+          {schedule.requiresAttendanceCheck ? (
+            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+              필수 출석
+            </span>
+          ) : null}
+        </div>
+      </div>
+      {schedule.requiresAttendanceCheck && schedule.attendanceWindowLabel ? (
+        <p className="mt-2 text-xs font-semibold text-emerald-700">
+          {schedule.attendanceWindowLabel}
+        </p>
+      ) : null}
+      {schedule.sourceType === "CUSTOM" ? (
+        <div className="mt-2 flex justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex h-8 items-center rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            수정
+          </button>
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={onDelete}
+            className={`inline-flex h-8 items-center rounded-full border border-slate-300 px-3 text-xs font-semibold text-slate-600 ${
+              isDeleting ? "cursor-not-allowed bg-slate-100" : "bg-white hover:bg-slate-50"
+            }`}
+          >
+            삭제
+          </button>
+        </div>
+      ) : null}
+    </article>
   );
 }
 
