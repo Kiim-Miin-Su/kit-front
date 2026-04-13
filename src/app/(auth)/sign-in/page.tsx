@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
-import { setRoleCookie } from "@/lib/auth-storage";
 import { signIn } from "@/services/auth";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -51,9 +50,6 @@ export default function SignInPage() {
         password,
       });
       setSession(session);
-      if (session.user?.role) {
-        setRoleCookie(session.user.role);
-      }
       router.push(redirectTarget);
     } catch (caughtError) {
       setError(resolveSignInErrorMessage(caughtError));
