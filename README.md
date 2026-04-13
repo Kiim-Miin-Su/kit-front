@@ -6,7 +6,39 @@ Next.js 15 App Router 기반 AI 교육 LMS 프론트엔드입니다.
 
 ## 시작하기
 
-**사전 요구사항:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) 설치
+**사전 요구사항:** 가능한 경우 `./setup.sh`가 Docker 설치/실행을 우선 시도합니다.
+
+### 최소 설치물
+
+macOS:
+
+1. `Git`
+2. `Docker Desktop`
+3. `Homebrew`는 자동 설치를 쓰고 싶을 때만 필요
+
+Windows:
+
+1. `Git for Windows` (Git Bash 포함)
+2. `Docker Desktop`
+3. `winget`은 자동 설치를 쓰고 싶을 때만 필요
+
+`front/setup.sh`는 Docker가 없거나 꺼져 있으면 자동 설치/실행을 시도합니다. 기본 실행은 실 API 연동 기준이며, mock 모드는 `--allow-mock`을 명시했을 때만 허용합니다.
+
+### 수동 설치 명령
+
+macOS:
+
+```bash
+brew install git
+brew install --cask docker
+```
+
+Windows PowerShell:
+
+```powershell
+winget install -e --id Git.Git
+winget install -e --id Docker.DockerDesktop
+```
 
 ```bash
 git clone <repo-url>
@@ -14,24 +46,56 @@ cd front
 ./setup.sh
 ```
 
+같은 부모 디렉터리에 `back` 저장소가 함께 있으면 `front/setup.sh`가 back을 먼저 기동한 뒤 front를 올립니다.
+
+예시:
+
+```text
+workspace/
+├── back/
+└── front/
+```
+
 > **Windows 사용자:** Git Bash / WSL2 터미널에서 실행하세요.  
 > PowerShell: `scripts/setup-dev.ps1` → `docker compose up -d`
 
+### 운영자 빠른 실행
+
+macOS:
+
+1. `back`, `front` 저장소를 같은 부모 디렉터리에 둡니다.
+2. `Terminal`에서 `cd front && ./setup.sh` 실행
+3. 완료 메시지에 나온 `프론트엔드`, `로그인`, `관리자`, `백엔드 API` 주소 확인
+
+Windows:
+
+1. `back`, `front` 저장소를 같은 부모 디렉터리에 둡니다.
+2. `Git Bash`에서 `cd front && ./setup.sh` 실행
+3. `winget` 사용이 가능한 PC면 Docker Desktop 설치를 자동 시도합니다.
+4. 회사 정책으로 자동 설치가 막히면 README 하단 설치 명령을 수동 실행한 뒤 다시 `./setup.sh`
+
 `setup.sh`가 자동으로 처리합니다:
 
-1. Docker 설치 및 실행 여부 확인 (미설치 시 OS별 설치 가이드 출력)
+1. Docker 설치 및 실행 여부 확인
 2. `.env` 파일 자동 생성 (없을 경우 개발 기본값으로 생성)
-3. Next.js 개발 서버 컨테이너 시작
-4. 컨테이너 내부: `npm install` → `next dev` 시작
-5. 서버 준비 완료 대기 후 접속 정보 출력
+3. 이미 사용 중인 `3000`을 피해서 빈 호스트 포트 자동 선택
+4. sibling `back` 저장소가 있으면 백엔드 먼저 실행
+5. Next.js 개발 서버 컨테이너 시작
+6. 컨테이너 내부: `npm install` → `next dev` 시작
+7. 서버 준비 완료 대기 후 접속 정보 출력
 
-브라우저에서 http://localhost:3000 접속
+기본 실행은 실 API 연동입니다. 백엔드 없이 UI만 확인하려는 경우에만 `--allow-mock`를 사용합니다.
 
-> 백엔드 없이도 mock 데이터로 UI 확인 가능합니다.  
-> 실 API 연동은 [back 레포](../back/)를 먼저 `./setup.sh`로 실행하세요.
+| 접속 대상 | 기본 URL |
+|-----------|----------|
+| 프론트 홈 | http://localhost:3000 |
+| 로그인 | http://localhost:3000/sign-in |
+| 관리자 | http://localhost:3000/admin |
+| 학습 허브 | http://localhost:3000/learn |
 
 ```bash
-./setup.sh --install    # Docker 자동 설치 포함 (macOS Homebrew / Linux apt)
+./setup.sh --no-install # Docker 자동 설치 비활성화
+./setup.sh --allow-mock # back 없이 front만 확인
 ```
 
 ---
@@ -45,6 +109,14 @@ make stop       # 서버 중지
 ```
 
 전체 명령어: `make help`
+
+문제가 있으면 먼저 아래 순서로 확인하세요.
+
+```bash
+docker compose ps
+make logs
+curl http://localhost:3000
+```
 
 ---
 
@@ -66,8 +138,29 @@ make stop       # 서버 중지
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
+| `HOST_PORT` | `3000` | 호스트에 노출할 프론트엔드 포트 |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000` | 백엔드 API 주소 |
 | `NEXT_PUBLIC_DEV_ROLE_BYPASS` | `false` | 개발 중 역할 bypass (UI 확인용) |
+
+---
+
+## 운영자 접속 정보
+
+기본 seed 기준 로그인 계정:
+
+| 역할 | URL | 계정 |
+|------|-----|------|
+| 학생 | `/sign-in` 후 `/learn`, `/student` | `student-demo-01@koreait.academy / password123` |
+| 강사 | `/sign-in` 후 `/instructor` | `instructor-dev-01@koreait.academy / password123` |
+| 관리자 | `/sign-in` 후 `/admin` | `admin-root@koreait.academy / password123` |
+
+운영자가 자주 확인하는 값:
+
+| 항목 | 기본값 | 확인 방법 |
+|------|--------|-----------|
+| 프론트 포트 | `3000` | `.env`의 `HOST_PORT` |
+| 백엔드 API | `http://localhost:4000` | `.env`의 `NEXT_PUBLIC_API_BASE_URL` |
+| 역할 bypass | `false` | `.env`의 `NEXT_PUBLIC_DEV_ROLE_BYPASS` |
 
 ---
 
@@ -222,6 +315,8 @@ back 레포에서 `./setup.sh` 실행 후 사용 가능합니다.
 
 | 문서 | 설명 |
 |------|------|
+| [`EXTENSION_GUIDE.md`](./EXTENSION_GUIDE.md) | 확장 전략, `.env`, 배포, CORS, 보호 페이지 주의사항 |
+| [`PRODUCTION_CHECKLIST.md`](./PRODUCTION_CHECKLIST.md) | 운영 배포 전후 점검 체크리스트 |
 | [`progress/INFO.md`](./progress/INFO.md) | 아키텍처 기준 및 구현 공백 |
 | [`progress/progress_10.md`](./progress/progress_10.md) | 최신 진행 상황 (2026-04-13) |
 | [`progress/architecture.md`](./progress/architecture.md) | 백엔드 연동 아키텍처 |

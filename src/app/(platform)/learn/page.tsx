@@ -1,5 +1,5 @@
 import { LearnPlayerView } from "@/features/learn/learn-player-view";
-import { fetchLearnCourse, fetchMyLearningCourses } from "@/services/course";
+import { fetchLearnCourse } from "@/services/course";
 
 export default async function LearnPage({
   searchParams,
@@ -10,7 +10,6 @@ export default async function LearnPage({
   }>;
 }) {
   const { courseSlug, previewLessonId } = await searchParams;
-  const learningCourses = await fetchMyLearningCourses();
   const course = await fetchLearnCourse(courseSlug);
   const selectedLesson =
     course.curriculumPreview.find((lesson) => lesson.id === previewLessonId) ??
@@ -22,7 +21,6 @@ export default async function LearnPage({
       course={course}
       selectedLesson={selectedLesson}
       isPreviewMode={isPreviewMode}
-      learningCourses={learningCourses}
     />
   );
 }

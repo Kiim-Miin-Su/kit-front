@@ -25,12 +25,20 @@ export default function SignInPage() {
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [redirectTarget] = useState(() => {
+    if (typeof window === "undefined") {
+      return "/learn";
+    }
+
+    const current = new URL(window.location.href);
+    return resolveRedirectTarget(current.searchParams.get("redirect"));
+  });
 
   useEffect(() => {
     if (hydrated && isAuthenticated) {
-      router.replace("/learn");
+      router.replace(redirectTarget);
     }
-  }, [hydrated, isAuthenticated, router]);
+  }, [hydrated, isAuthenticated, redirectTarget, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +54,7 @@ export default function SignInPage() {
       if (session.user?.role) {
         setRoleCookie(session.user.role);
       }
-      router.push("/learn");
+      router.push(redirectTarget);
     } catch (caughtError) {
       setError(resolveSignInErrorMessage(caughtError));
     } finally {
@@ -142,6 +150,18 @@ export default function SignInPage() {
       </section>
     </main>
   );
+}
+
+function resolveRedirectTarget(redirect: string | null) {
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+    return "/learn";
+  }
+
+  if (redirect.startsWith("/sign-in")) {
+    return "/learn";
+  }
+
+  return redirect;
 }
 
 function resolveSignInErrorMessage(error: unknown) {

@@ -26,6 +26,7 @@ for (const arg of args) {
 
 const content = [
   "# Generated for frontend development",
+  "HOST_PORT=3000",
   `NEXT_PUBLIC_API_BASE_URL=${options.apiBaseUrl}`,
   `NEXT_PUBLIC_DEV_ROLE_BYPASS=${options.roleBypass}`,
   "",

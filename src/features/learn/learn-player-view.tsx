@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { getAttendanceOverview, studentAttendanceProfile } from "@/features/attendance/mock-attendance-data";
 import { EnrollmentStatusBadge } from "@/features/course/enrollment-status-badge";
 import { CurriculumGrid } from "@/features/learn/curriculum-grid";
@@ -5,20 +9,34 @@ import { LearningMetrics } from "@/features/learn/learning-metrics";
 import { MyCourseList } from "@/features/learn/my-course-list";
 import { PlayerStage } from "@/features/learn/player-stage";
 import { WorkspaceActions } from "@/features/learn/workspace-actions";
+import { fetchMyLearningCourses } from "@/services/course";
 import type { CourseDetail, CourseLessonPreview } from "@/types/course";
 
 export function LearnPlayerView({
   course,
   selectedLesson,
   isPreviewMode,
-  learningCourses,
 }: {
   course: CourseDetail;
   selectedLesson: CourseLessonPreview;
   isPreviewMode: boolean;
-  learningCourses: CourseDetail[];
 }) {
   const attendanceOverview = getAttendanceOverview(studentAttendanceProfile);
+  const [learningCourses, setLearningCourses] = useState<CourseDetail[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMyLearningCourses().then((courses) => {
+      if (!cancelled) {
+        setLearningCourses(courses);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="space-y-5">

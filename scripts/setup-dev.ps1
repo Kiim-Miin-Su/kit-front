@@ -18,6 +18,7 @@ function Ensure-EnvFile($Overwrite) {
 
   $Content = @"
 # Generated for frontend development
+HOST_PORT=3000
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 NEXT_PUBLIC_DEV_ROLE_BYPASS=false
 "@

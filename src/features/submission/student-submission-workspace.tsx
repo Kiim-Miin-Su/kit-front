@@ -25,6 +25,7 @@ import {
   resolveRecommendedSubmissionLanguage,
 } from "@/features/submission/submission-templates";
 import { submissionEditorTypeOptions } from "@/features/submission/submission-ui-config";
+import { fetchMyLearningCourses } from "@/services/course";
 import { createStudentAssignmentSubmission, fetchStudentSubmissionWorkspace } from "@/services/submission";
 import { useAuthStore } from "@/store/auth-store";
 import type { CourseDetail } from "@/types/course";
@@ -38,11 +39,16 @@ import type {
   SubmissionError,
 } from "@/types/submission";
 
-export function StudentSubmissionWorkspace({ courses }: { courses: CourseDetail[] }) {
+export function StudentSubmissionWorkspace({
+  initialCourses = [],
+}: {
+  initialCourses?: CourseDetail[];
+}) {
   const user = useAuthStore((state) => state.user);
   const studentActor = resolveRuntimeActor(user, "student");
   const studentId = studentActor.id;
   const studentName = studentActor.name;
+  const [courses, setCourses] = useState<CourseDetail[]>(initialCourses);
   const enrolledCourses = useMemo<SubmissionCourseRef[]>(
     () =>
       courses
@@ -66,6 +72,20 @@ export function StudentSubmissionWorkspace({ courses }: { courses: CourseDetail[
   const [draftSavedAt, setDraftSavedAt] = useState<string>();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string }>();
   const draftApplyingRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMyLearningCourses().then((resolvedCourses) => {
+      if (!cancelled) {
+        setCourses(resolvedCourses);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

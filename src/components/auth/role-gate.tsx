@@ -18,9 +18,7 @@ export function RoleGate({
 }) {
   const hydrated = useAuthStore((state) => state.hydrated);
   const role = useAuthStore((state) => state.getRole());
-  const bypassEnabled =
-    process.env.NODE_ENV !== "production" ||
-    process.env.NEXT_PUBLIC_DEV_ROLE_BYPASS === "true";
+  const bypassEnabled = process.env.NEXT_PUBLIC_DEV_ROLE_BYPASS === "true";
   const hasRole = allowedRoles.includes(role as AllowedRole);
 
   if (!hydrated) {
