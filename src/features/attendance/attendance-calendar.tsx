@@ -190,7 +190,10 @@ function resolveReferenceDate(
     return fromSchedules;
   }
 
-  return new Date();
+  // new Date()는 SSR/CSR 타이밍에 따라 hydration mismatch를 유발할 수 있음.
+  // 일정도 없고 선택일도 없으면 2000-01-01을 기준으로 렌더링하고,
+  // 클라이언트에서 부모가 today를 selectedDateKey로 주입해야 함.
+  return new Date(2000, 0, 1);
 }
 
 function parseDateKey(dateKey?: string) {

@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { resolveScheduleCheckInAvailability } from "@/features/attendance/attendance-check-in-availability";
 import { getScheduleTone } from "@/features/attendance/attendance-schedule-tone";
 import type { StudentScheduleEvent } from "@/types/attendance";
@@ -11,6 +15,10 @@ export function AttendanceEventDetail({
   events: StudentScheduleEvent[];
   onOpenAttendance: (eventId: string) => void;
 }) {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
   if (!dateKey) {
     return (
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -34,9 +42,10 @@ export function AttendanceEventDetail({
         <div className="mt-4 space-y-3">
           {events.map((event) => {
             const tone = getScheduleTone(event.categoryLabel);
-            const checkInAvailability = event.requiresAttendanceCheck
-              ? resolveScheduleCheckInAvailability(event)
-              : { canCheckInNow: false, reason: undefined };
+            const checkInAvailability =
+              event.requiresAttendanceCheck && now
+                ? resolveScheduleCheckInAvailability(event, now)
+                : { canCheckInNow: false, reason: undefined };
             const checkInDisabled = event.requiresAttendanceCheck && !checkInAvailability.canCheckInNow;
 
             return (

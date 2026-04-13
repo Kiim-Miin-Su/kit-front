@@ -57,7 +57,7 @@ export function InstructorConsoleWorkspace() {
   const [createCourseId, setCreateCourseId] = useState("");
   const [createTitle, setCreateTitle] = useState("");
   const [createPrompt, setCreatePrompt] = useState("");
-  const [createDueAtInput, setCreateDueAtInput] = useState(() => buildDefaultDueAtInput());
+  const [createDueAtInput, setCreateDueAtInput] = useState("");
   const [createAllowFileUpload, setCreateAllowFileUpload] = useState(true);
   const [createAllowCodeEditor, setCreateAllowCodeEditor] = useState(true);
   const [templateTargetMode, setTemplateTargetMode] = useState<InstructorTemplateTargetMode>("NEW_ASSIGNMENT");
@@ -81,6 +81,10 @@ export function InstructorConsoleWorkspace() {
     setSelectedSubmissionId((current) => current || data.submissions[0]?.id);
     setVideoCourseId((current) => current === "ALL" ? data.assignments[0]?.courseId ?? "ALL" : current);
   };
+
+  useEffect(() => {
+    setCreateDueAtInput(buildDefaultDueAtInput());
+  }, []);
 
   useEffect(() => {
     loadWorkspace();

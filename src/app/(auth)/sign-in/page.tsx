@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 import { signIn } from "@/services/auth";
@@ -16,22 +16,17 @@ const demoAccounts = [
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const hydrated = useAuthStore((state) => state.hydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
   const setSession = useAuthStore((state) => state.setSession);
+
+  const redirectTarget = resolveRedirectTarget(searchParams.get("redirect"));
 
   const [email, setEmail] = useState("student-demo-01@koreait.academy");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [redirectTarget] = useState(() => {
-    if (typeof window === "undefined") {
-      return "/learn";
-    }
-
-    const current = new URL(window.location.href);
-    return resolveRedirectTarget(current.searchParams.get("redirect"));
-  });
 
   useEffect(() => {
     if (hydrated && isAuthenticated) {

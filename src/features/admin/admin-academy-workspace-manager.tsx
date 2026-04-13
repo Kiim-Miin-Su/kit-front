@@ -80,7 +80,12 @@ export function AdminAcademyWorkspaceManager({
   const [newCourseCapacity, setNewCourseCapacity] = useState("");
   const [newCoursePacingType, setNewCoursePacingType] =
     useState<AdminCoursePacingType>("INSTRUCTOR_PACED");
-  const [newCourseDates, setNewCourseDates] = useState(buildDefaultCourseDateWindow);
+  const [newCourseDates, setNewCourseDates] = useState<ReturnType<typeof buildDefaultCourseDateWindow>>({
+    startDate: "",
+    endDate: "",
+    enrollmentStartDate: "",
+    enrollmentEndDate: "",
+  });
 
   const [pendingAssignUserId, setPendingAssignUserId] = useState<string>();
   const [assignUserNameInput, setAssignUserNameInput] = useState("");
@@ -89,6 +94,10 @@ export function AdminAcademyWorkspaceManager({
   const [verifyingAssignUser, setVerifyingAssignUser] = useState(false);
   const [verifiedAssignUser, setVerifiedAssignUser] = useState<AdminCourseWorkspaceUser>();
   const [pendingAssignRole, setPendingAssignRole] = useState<AdminCourseMemberRole>("STUDENT");
+
+  useEffect(() => {
+    setNewCourseDates(buildDefaultCourseDateWindow());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
